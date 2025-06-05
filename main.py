@@ -8,6 +8,8 @@ import json
 from datetime import datetime
 import sqlite3
 import re
+import os
+import sys
 
 
 SERVER_URL = "localhost:8000"
@@ -19,6 +21,10 @@ recipient = None
 db_con = sqlite3.connect(f"local{input("db: ")}.db")
 db_cur = db_con.cursor()
 # TODO: Delete the Oldest Message After 1,000 Messages are Stored In the Table
+# TODO: See if I can make input and messages more separated eg:
+# Dave> Message of words
+# Jeff> Another message
+# > Message to be sent
 
 
 def sanitize_input(name: str) -> str:
@@ -27,7 +33,13 @@ def sanitize_input(name: str) -> str:
     return name
 
 
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    sys.stdout.flush()
+
+
 def create_account() -> str | bool:
+    clear()
     print("\nCREATE ACCOUNT\n")
     new_username = sanitize_input(input("Enter A Username: "))
     new_password = input("Enter A Password: ")
@@ -47,6 +59,7 @@ def create_account() -> str | bool:
 
 
 def login(username: str | None = None, password: str | None = None) -> str | bool:
+    clear()
     print("\nLOGIN\n")
     if not username and not password:
         username = sanitize_input(input("Enter Username: "))
@@ -56,13 +69,13 @@ def login(username: str | None = None, password: str | None = None) -> str | boo
     if response.status_code == 200:
         return username
     elif response.status_code == 404:
-        # TODO: Let User Try Again or Create Account
-        return False
+        return login()
     else:
         return False
 
 
 def add_contact(contact_of: str):
+    clear()
     new_contact = input("New Contact's Username: ")
     db_cur.execute("""CREATE TABLE IF NOT EXISTS contacts(
                         id INTEGER PRIMARY KEY,
@@ -76,15 +89,16 @@ def add_contact(contact_of: str):
 
 
 def select_contact(contact_of: str):
+    clear()
     print("\nSELECT CONTACT\n")
     print("Type a Contact's Username\nor\nSimply Press Enter to Add a New One:\n")
     contact_of = sanitize_input(contact_of)
     if not db_cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='contacts'").fetchall():
         return add_contact(contact_of)
     res = db_cur.execute(f"SELECT contact_name FROM contacts WHERE contact_of=?", (contact_of,))
-    contacts = res.fetchall()[0]
+    contacts = [c[0] for c in res.fetchall()]
     for c in contacts:
-        print(c)
+        print(f"- {c}")
     selection = input("> ")
     if selection == "":
         return add_contact(contact_of)
@@ -146,6 +160,7 @@ async def ws_connection(username: str):
 
 
 def main():
+    clear()
     global recipient
     # Create Account or Login
     command = input("Create Account (1) or Login (2): ")
@@ -163,4 +178,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\033[31mKeyboard Interrupt\033[0m")
+        exit()
+
