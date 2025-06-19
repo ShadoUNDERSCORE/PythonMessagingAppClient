@@ -28,7 +28,7 @@ session_messages = asyncio.Queue()
 shutdown_event = asyncio.Event()
 message_db_updated_event = asyncio.Event()
 
-db_con = sqlite3.connect(f"local{input("db: ")}.db")
+db_con = sqlite3.connect("local.db")
 db_cur = db_con.cursor()
 
 
@@ -67,6 +67,7 @@ class LoginUI(App):
         self.query_one("#recipient-field").focus()
 
     def compose(self) -> ComposeResult:
+        yield Label("Login" if has_account else "Create Account")
         yield Label("Username", id="uname-f-label")
         yield Input(id="uname-field")
         yield Label("Password", id="passwd-f-label")
