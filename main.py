@@ -8,6 +8,7 @@ import sqlite3
 import re
 import os
 import sys
+import dotenv
 
 from websockets.asyncio.client import connect, ClientConnection
 from textual import events, on
@@ -17,9 +18,23 @@ from textual.widgets import Input, Label
 from textual.scroll_view import ScrollableContainer
 from textual.reactive import reactive
 
-SERVER_URL = "localhost:8000"
-HTTP_URL = f"http://{SERVER_URL}"
-WEBSOCKET_URL = f"ws://{SERVER_URL}"
+dotenv.load_dotenv()
+
+is_server_url = os.environ.get("SERVER_URL")
+if not is_server_url:
+    server_url_input = input("Please provide a server URL or IP: ")
+    dotenv.set_key(".env", "SERVER_URL", server_url_input)
+else:
+    print(f"Saved Server: {is_server_url}")
+    server_url_input = input("Enter a New Server Address or Press Enter: ")
+    if server_url_input != "":
+        dotenv.set_key(".env", "SERVER_URL", server_url_input)
+
+dotenv.load_dotenv()
+SERVER_URL = os.environ.get("SERVER_URL")
+SERVER_URL_AND_PORT = f"{SERVER_URL}:8000"
+HTTP_URL = f"http://{SERVER_URL_AND_PORT}"
+WEBSOCKET_URL = f"ws://{SERVER_URL_AND_PORT}"
 
 glb_recipient = ""
 glb_username = ""
